@@ -1,0 +1,107 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User specific data and settings",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "Story": {
+      "title": "Story Fragment",
+      "description": "The main manuscript content",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "lastSaved": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" }
+      },
+      "required": ["title", "content", "lastSaved", "userId"]
+    },
+    "Character": {
+      "title": "Character Soul",
+      "description": "A character in the story",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "description": { "type": "string" },
+        "traits": { "type": "array", "items": { "type": "string" } },
+        "imageUrl": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["name", "role", "description", "userId"]
+    },
+    "Location": {
+      "title": "Cartographic Landmark",
+      "description": "A location in the world map",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["name", "type", "description", "userId"]
+    },
+    "TimelineEvent": {
+      "title": "Chronos Echo",
+      "description": "An event in the timeline",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "importance": { "type": "string", "enum": ["minor", "major", "critical"] },
+        "userId": { "type": "string" }
+      },
+      "required": ["date", "title", "content", "importance", "userId"]
+    },
+    "MoodItem": {
+      "title": "Inspiration Fragment",
+      "description": "An item on the moodboard",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "label": { "type": "string" },
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "userId": { "type": "string" }
+      },
+      "required": ["url", "label", "x", "y", "userId"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents"
+    },
+    "users/{userId}/stories/main": {
+      "schema": "Story",
+      "description": "The user's main manuscript"
+    },
+    "users/{userId}/characters/{charId}": {
+      "schema": "Character",
+      "description": "Collection of character souls"
+    },
+    "users/{userId}/locations/{locId}": {
+      "schema": "Location",
+      "description": "Collection of cartographic landmarks"
+    },
+    "users/{userId}/timeline/{eventId}": {
+      "schema": "TimelineEvent",
+      "description": "Collection of chronos echoes"
+    },
+    "users/{userId}/moodboard/{itemId}": {
+      "schema": "MoodItem",
+      "description": "Collection of inspiration fragments"
+    }
+  }
+}

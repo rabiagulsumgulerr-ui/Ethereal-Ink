@@ -1,0 +1,111 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global reusable helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp || (ts is string && ts.size() <= 50);
+    }
+
+    // User Profile Rules
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.email is string && data.email.size() <= 256
+               && (data.displayName == null || (data.displayName is string && data.displayName.size() <= 128))
+               && (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 1024));
+      }
+
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data)
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL']);
+
+      // Subcollections
+      match /stories/main {
+        function isValidStory(data) {
+          return data.title is string && data.title.size() <= 256
+                 && data.content is string && data.content.size() <= 1000000
+                 && data.userId == userId;
+        }
+
+        allow get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidStory(request.resource.data);
+        allow update: if isOwner(userId) && isValidStory(request.resource.data);
+      }
+
+      match /characters/{charId} {
+        function isValidCharacter(data) {
+          return data.name is string && data.name.size() <= 128
+                 && data.role is string && data.role.size() <= 128
+                 && data.description is string && data.description.size() <= 5000
+                 && data.traits is list && data.traits.size() <= 20
+                 && data.userId == userId;
+        }
+
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(charId) && isValidCharacter(request.resource.data);
+        allow update: if isOwner(userId) && isValidCharacter(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
+
+      match /locations/{locId} {
+        function isValidLocation(data) {
+          return data.name is string && data.name.size() <= 128
+                 && data.type is string && data.type.size() <= 128
+                 && data.description is string && data.description.size() <= 5000
+                 && data.userId == userId;
+        }
+
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(locId) && isValidLocation(request.resource.data);
+        allow update: if isOwner(userId) && isValidLocation(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
+
+      match /timeline/{eventId} {
+        function isValidEvent(data) {
+          return data.date is string && data.date.size() <= 128
+                 && data.title is string && data.title.size() <= 128
+                 && data.content is string && data.content.size() <= 5000
+                 && data.importance in ['minor', 'major', 'critical']
+                 && data.userId == userId;
+        }
+
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(eventId) && isValidEvent(request.resource.data);
+        allow update: if isOwner(userId) && isValidEvent(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
+
+      match /moodboard/{itemId} {
+        function isValidMoodItem(data) {
+          return data.url is string && data.url.size() <= 1024
+                 && data.label is string && data.label.size() <= 128
+                 && data.x is number && data.y is number
+                 && data.userId == userId;
+        }
+
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(itemId) && isValidMoodItem(request.resource.data);
+        allow update: if isOwner(userId) && isValidMoodItem(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}
